@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.bundle.min.js"></script>
+<script src="http://code.jquery.com/jquery-2.1.1.js"></script>
+
+<style>
+body {
+    color: black;
+    background-color: white;
+
+}
+</style>
+
+</head>
+  <body>
+
+
+<canvas id="myChart" width="150" height="50"></canvas>
+<script>
+
+
+var useRandomWatts = false;
+var useTestServer = false;
+
+var TEST_SERVER = useTestServer?"http://192.168.3.121/":"";
+
+function getLang()
+{
+	var ret;
+	if (navigator.languages != undefined) {
+		ret = navigator.languages[0]; 
+	} else { 
+		ret = navigator.language;
+	}
+	if(ret===undefined) return "en";
+	return ret;
+}
+
+function lan(text) {
+	if(getLang().match("fi")) {
+		var ret = {
+			"Watt": "W",
+			"Instantaneous power": "Hetkellinen teho",
+			"Power": "Teho",
+			"Energy1": "Kulutus1",
+			"Energy2": "Kulutus2",
+			"Time1": "Aika1",
+			"Time2": "Aika2",
+			"Maximum power": "Maksimiteho",
+			"Minimum power": "Minimiteho",
+			"Time2": "Aika2",
+			"Average Watt": "Keskiteho",
+			"minutes": "min",
+			"hours": "h",
+			"seconds": "s"
+		}[text];
+		
+	}
+	if(ret===undefined) ret = text;
+	return ret;
+}
+
+var ctx = document.getElementById("myChart");
+var data = [12, 19, 3, 5, 2, 3];
+var cPerKwh;
+var impPerKwh;
+
+var myChart = new Chart(ctx, {
+	type: 'line',
+      backgroundColor: "#F5DEB3",
+
+	data: {
+		labels: [],
+		datasets: [
+		{
+			label: lan('Average Watt'),
+			data: [],
+			fill: false,
+			backgroundColor: "rgb(51, 204, 51)",
+			borderColor: "rgb(51, 204, 51)"
+		},
+		{
+			label: lan('Watt'),
+			data: [],
+
+			backgroundColor: "rgb(255, 179, 179)",
+			borderColor: "red"
+		}],
+		borderWidth: 2
+	},
+	options: {
+
+		scales: {
+			yAxes: [{
+				ticks: {
+					beginAtZero:true
+				}
+			}]
+		}
+	}
+});
+
+
+function averageFromArray(array) {
+	var ret = 0;
+	var cnt = 0;
+	array.forEach(function(val){
+		ret += val;
+		cnt++;
+	});
+	return parseInt(ret/cnt);
+}
+
+function maxFromArray(array) {
+	var ret = 0;
+	array.forEach(function(val){
+		if(val>ret) ret=val;
+	});
+	return ret;
+}
+
+function minFromArray(array) {
+	var ret = 9999999999;
+	array.forEach(function(val){
+		if(val<ret) ret=val;
+	});
+	return ret;
+}
+
+var MAX_ARRAY = 1;
+
+function pulseLengthToWat(pulseLength) {
+	console.info("PulseLength: " + pulseLength);
+	if(pulseLength===0) return 0;
+	var ret = (3600/(pulseLength*impPerKwh))*1000000;
+	return parseInt(ret);
+}
+
+function counterToKwh(counter) {
+	var ret = (1/impPerKwh)*(counter);
+	return ret.toFixed(4);
+}
+
+function timerToStr(timer) {
+	if(timer<60) {
+		return timer + " " + lan("seconds");
+	} else if(timer<(60*60)) {
+		return parseInt(timer/60) + " " + lan("minutes");
+	} else {
+		var h = parseInt(timer/60/60);
+		var m = parseInt(timer/60 - h*60);
+		return h + " " + lan("hours") + " " + m + " " + lan("minutes");
+	}
+}
+
+function calculatePrice(kWh) {
+	var price = (kWh * cPerKwh) / 100;
+	return price.toFixed(2) + " Eur";
+}
+
+function addValueToChart(counter0, counter1, timer0, timer1, pulseLength, update) {
+	var wat = pulseLengthToWat(pulseLength);
+	var kwh0 = 	counterToKwh(counter0);
+	var kwh1 = 	counterToKwh(counter1);
+	var tm0 = timerToStr(timer0);
+	var tm1 = timerToStr(timer1);
+
+
+	if(useRandomWatts) {
+		wat = parseInt(Math.random() * 1000);
+	}
+
+	myChart.data.datasets[1].data.push(wat);
+
+
+	function shift(array) {
+		while(array.length>MAX_ARRAY) {
+			array.shift();
+		}
+	}
+
+	shift(myChart.data.datasets[1].data);
+
+
+	var average = averageFromArray(myChart.data.datasets[1].data);
+	myChart.data.datasets[0].data.push(average);
+	shift(myChart.data.datasets[0].data);
+
+	if(myChart.data.labels.length===0) {
+		myChart.data.labels.push(0);
+	} else {
+		myChart.data.labels[myChart.data.labels.length-1] = "";
+		myChart.data.labels.push(parseInt(myChart.data.labels.length*15/60) + " " + lan("minutes"));
+	}
+	
+
+
+	shift(myChart.data.labels);
+
+
+	if(update===true) {
+		myChart.update();
+	}
+
+	$('table').empty();
+
+	function addTd(name, value, value2, value3) {
+		if(value3===undefined) value3="";
+		else  value3 = " [" + value3 + "]"; 
+		if(value2===undefined) value2="";
+		if(value===undefined) value="";
+
+		var tr = "<tr>";
+		tr += "<td>" + name + "</td>";
+		tr += "<td>" + value + " " + value2 + value3 + "</td>";
+		tr += "</tr>";
+		$('table').append(tr);
+
+	}
+
+	addTd(lan("Instantaneous power"), wat, lan("Watt"));
+	addTd(lan("Power"), average, lan("Watt"));
+	addTd(lan("Maximum power"), maxFromArray(myChart.data.datasets[1].data), lan("Watt"));
+	addTd(lan("Minimum power"), minFromArray(myChart.data.datasets[1].data), lan("Watt"));
+	addTd(lan("Energy1"), kwh0, lan("kWh"), calculatePrice(kwh0));
+	addTd(lan("Time1"), tm0);
+	addTd(lan("Energy2"), kwh1, lan("kWh"), calculatePrice(kwh1));
+	addTd(lan("Time2"), tm1);
+	addTd(lan("c/kWh"), cPerKwh);
+}
+
+window.setInterval(currentRequest, 15000);
+
+
+function allRequest() {
+	$.get(TEST_SERVER+"api/getAll", function( data ) {
+		console.info("allRequest: %j", data);
+		data = JSON.parse(data);
+		MAX_ARRAY = data.length;
+		data.forEach(function(data){
+			addValueToChart(0, 0, 0, 0, data);
+		});
+		console.info("currentRequest: %j", data);
+		currentRequest();
+	});
+}
+
+function currentRequest() {
+	$.get(TEST_SERVER+"api/getUpdate", function( data ) {
+		data = JSON.parse(data);
+		console.info("currentRequest: %j", data);
+		MAX_ARRAY = data[5];
+		addValueToChart(data[0], data[1], data[2], data[3], data[4], true);	
+	});
+}
+
+function resetRequest() {
+	$.get(TEST_SERVER+"api/doReset", function( data ) {
+		console.info("resetRequest: %j", data);
+		currentRequest();
+	});
+}
+
+function customSetup() {
+	$.get(TEST_SERVER+"api/getCustomSetup", function( data ) {
+		data = JSON.parse(data);
+		console.info("getCustomSetup: %j", data);
+
+		cPerKwh = data[1];
+		impPerKwh = data[0];
+
+
+		console.info("cPerKwh: " + cPerKwh);
+		console.info("impPerKwh: " + impPerKwh);
+
+		allRequest();
+	});
+}
+customSetup();
+
+</script>
+
+<table id="table"></table>
+
+<button onclick="resetRequest()">Reset</button>
+
+  </body>
+
+</html>
+
