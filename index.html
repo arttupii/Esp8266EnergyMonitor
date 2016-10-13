@@ -2,15 +2,16 @@
 <html>
 
   <head>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.bundle.min.js"></script>
 <script src="http://code.jquery.com/jquery-2.1.1.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/chartist/0.7.2/chartist.min.css" rel="stylesheet" />
 
 <style>
-body {
-    color: black;
-    background-color: white;
-
-}
+  body {
+	background: #203135;
+	color: orange;
+	}
 </style>
 
 </head>
@@ -42,14 +43,14 @@ function lan(text) {
 	if(getLang().match("fi")) {
 		var ret = {
 			"Watt": "W",
-			"Instantaneous power": "Hetkellinen teho",
+			"Average": "Keskiteho",
 			"Power": "Teho",
 			"Energy1": "Kulutus1",
 			"Energy2": "Kulutus2",
 			"Time1": "Aika1",
 			"Time2": "Aika2",
-			"Maximum power": "Maksimiteho",
-			"Minimum power": "Minimiteho",
+			"Max": "Maksimi",
+			"Min": "Minimi",
 			"Time2": "Aika2",
 			"Average Watt": "Keskiteho",
 			"minutes": "min",
@@ -213,17 +214,17 @@ function addValueToChart(counter0, counter1, timer0, timer1, pulseLength, update
 		if(value===undefined) value="";
 
 		var tr = "<tr>";
-		tr += "<td>" + name + "</td>";
+		tr += '<td width="100px">' + name + "</td>";
 		tr += "<td>" + value + " " + value2 + value3 + "</td>";
 		tr += "</tr>";
 		$('table').append(tr);
 
 	}
 
-	addTd(lan("Instantaneous power"), wat, lan("Watt"));
-	addTd(lan("Power"), average, lan("Watt"));
-	addTd(lan("Maximum power"), maxFromArray(myChart.data.datasets[1].data), lan("Watt"));
-	addTd(lan("Minimum power"), minFromArray(myChart.data.datasets[1].data), lan("Watt"));
+	addTd(lan("Power"), wat, lan("Watt"));
+	addTd(lan("Average"), average, lan("Watt"));
+	addTd(lan("Max"), maxFromArray(myChart.data.datasets[1].data), lan("Watt"));
+	addTd(lan("Min"), minFromArray(myChart.data.datasets[1].data), lan("Watt"));
 	addTd(lan("Energy1"), kwh0, lan("kWh"), calculatePrice(kwh0));
 	addTd(lan("Time1"), tm0);
 	addTd(lan("Energy2"), kwh1, lan("kWh"), calculatePrice(kwh1));
@@ -283,7 +284,7 @@ customSetup();
 </script>
 
 <table id="table"></table>
-
+<br>
 <button onclick="resetRequest()">Reset</button>
 
   </body>
