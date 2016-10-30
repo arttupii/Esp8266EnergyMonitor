@@ -37,7 +37,7 @@ class AskCPerKwhMenu: public AskStringMenu {
     }
     void ready(String &str) {
       customConfig.cPerKwh = atoi(str.c_str());
-      saveCustomConfigToEeprom();     
+      saveCustomConfigToEeprom();
     }
 };
 
@@ -45,10 +45,10 @@ class CustomMenu: public MenuTemplate {
   public:
     CustomMenu(MenuTemplate *parent): MenuTemplate(parent) {}
     void printMenu() {
-      Serial.println("Custom menu\n\n");
+      Serial.println("Custom menu\n\r\n\r");
 
-      Serial.printf(" imp/kWh: %d\n", customConfig.impPerKwh);
-      Serial.printf(" c/kWh: %d\n\n", customConfig.cPerKwh);
+      Serial.printf(" imp/kWh: %d\n\r", customConfig.impPerKwh);
+      Serial.printf(" c/kWh: %d\n\r\n\r", customConfig.cPerKwh);
 
 
       Serial.println(" 1. Set imp/kWh");
