@@ -57,15 +57,6 @@ void handleGetCustomSetup() {
 	server.send ( 200, "text/plain", ret);
 }
 void setup ( void ) {
-pinMode(1, INPUT);
-pinMode(2, INPUT);
-pinMode(3, INPUT);
-pinMode(4, INPUT);
-//pinMode(5, INPUT);
-//pinMode(6, INPUT);
-//pinMode(7, INPUT);
-//pinMode(8, INPUT);
-
 	Serial.begin ( 115200 );
 
 	server.on ( "/", handleRoot );
@@ -73,12 +64,14 @@ pinMode(4, INPUT);
 	server.on ( "/api/doReset", handleApiReset);
     server.on ( "/api/getUpdate", handleGetUpdate);
     server.on ( "/api/getCustomSetup", handleGetCustomSetup);
- 
+
 	server.onNotFound ( handleNotFound );
 	server.begin();
 	Serial.println ( "HTTP server started" );
     setupMenu.setCustomMenuCallback(customMenuCb);
     readCustomConfigFromEeprom();
+
+	meter.begin();
 }
 
 void loop ( void ) {
@@ -86,5 +79,3 @@ void loop ( void ) {
   meter.run();
   setupMenu.run();
 }
-
-

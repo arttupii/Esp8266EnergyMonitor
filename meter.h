@@ -12,6 +12,7 @@ class Meter {
 		String getUpdate();
 		String getPulseArray();
 		void run();
+		void begin();
 	private:
 		static void highInterrupt();
 		static uint64_t counter0;
@@ -24,6 +25,7 @@ class Meter {
 
 		unsigned int pulseLengthArray[PULSEARRAY_SIZE];
 		int arrayIndex;
+		int pin;
 };
 
 #endif

@@ -25,15 +25,23 @@ Meter::Meter(int gpioPin){
     counter0 = 0;
 	arrayIndex = 0;
 	pulseLength = 0;
-	pinMode(gpioPin, INPUT_PULLUP);
-    attachInterrupt(gpioPin, highInterrupt, RISING);	
+	pin = gpioPin;
+	memset(pulseLengthArray, 0, sizeof(pulseLengthArray));
+}
+
+
+void Meter::begin() {
+	pinMode(pin, INPUT_PULLUP);
+
+	cli();
+    attachInterrupt(pin, highInterrupt, RISING);	
+	sei();
 
 	measurementTimer = millis64();
 
-	memset(pulseLengthArray, 0, sizeof(pulseLengthArray));
-
-	reset();
+	reset();	
 }
+
 
 void Meter::highInterrupt() {
 	counter0++;
